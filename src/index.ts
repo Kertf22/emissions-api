@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import express from 'express'
 
 const prisma = new PrismaClient()
@@ -7,67 +7,83 @@ const app = express()
 app.use(express.json())
 
 // Para determinado limite de paises retorne os quem maior emissão
-// total ou per_capita
+
 app.get(`/co2-total/:paises_count/:ordem`, async (req, res) => {
 
   const { paises_count, ordem } = req.params;
-
-  const data = await prisma.co2.groupBy({
-    by: ['country'],
-    _sum: {
-      total: true,
-      per_capita: true,
-    },
-    take: Number(paises_count),
-    orderBy: {
+  try {
+    const data = await prisma.co2.groupBy({
+      by: ['country'],
       _sum: {
-        [ordem]: "desc"
+        total: true,
+        per_capita: true,
+      },
+      take: Number(paises_count),
+      orderBy: {
+        _sum: {
+          [ordem]: "desc"
+        }
       }
-    }
-  });
+    });
 
-  const format = data.map(({ _sum: { total, per_capita }, country, }) => ({
-    country, total, per_capita,
-  }))
-  res.status(200)
-  res.send(format);
-  res.end()
+    const format = data.map(({ _sum: { total, per_capita }, country, }) => ({
+      country, total, per_capita,
+    }))
+    res.status(200)
+    res.send(format);
+    res.end()
+  } catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
 });
 
 // Dado um pais retorne dados
 app.get(`/country/:country/:ano`, async (req, res) => {
-  const { country, ano } = req.params;
-  const data = await prisma.co2.groupBy({
-    where: {
-      country: {
-        equals: country
+  try {
+    const { country, ano } = req.params;
+    const data = await prisma.co2.groupBy({
+      where: {
+        country: {
+          equals: country
+        },
+        year: {
+          gt: Number(ano)
+        }
       },
-      year: {
-        gt: Number(ano)
+      by: ['year', 'country'],
+      _sum: {
+        coal: true,
+        gas: true,
+        flaring: true,
+        cement: true,
+      },
+      orderBy: {
+        year: 'desc',
+
       }
-    },
-    by: ['year', 'country'],
-    _sum: {
-      coal: true,
-      gas: true,
-      flaring: true,
-      cement: true,
-    },
-    orderBy: {
-      year: 'desc',
 
-    }
+    });
 
-  });
+    const format = data.map(({ _sum, country, year }) => ({
+      ..._sum,
+      country, year
+    }))
 
-  const format = data.map(({ _sum, country, year }) => ({
-    ..._sum,
-    country, year
-  }))
+    res.status(200)
+    res.send(format);
+    res.end()
+  } catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
 
-  res.status(200)
-  res.send(format);
-  res.end()
 });
 
 // Para um ano retorne todas infos
@@ -75,67 +91,82 @@ app.get(`/country/:country/:ano`, async (req, res) => {
 app.get(`/year-total/:ano`, async (req, res) => {
   const { ano } = req.params;
 
-  const years = await prisma.co2.findMany({
-    where: {
-      year: {
-        gt: Number(ano)
+  try {
+    const years = await prisma.co2.findMany({
+      where: {
+        year: {
+          gt: Number(ano)
+        }
+      },
+      distinct: 'year',
+      select: {
+        year: true
       }
-    },
-    distinct: 'year',
-    select: {
-      year: true
-    }
-  })
+    })
 
 
-  const data = await prisma.co2.groupBy({
-    where: {
-      year: {
-        gt: Number(ano)
+    const data = await prisma.co2.groupBy({
+      where: {
+        year: {
+          gt: Number(ano)
+        }
+      },
+      by: ['country', 'year'],
+      _sum: {
+        total: true,
+        coal: true,
+        gas: true,
+        flaring: true,
+        cement: true,
+      },
+      orderBy: {
+        year: 'desc',
       }
-    },
-    by: ['country', 'year'],
-    _sum: {
-      total: true,
-      coal: true,
-      gas: true,
-      flaring: true,
-      cement: true,
-    },
-    orderBy: {
-      year: 'desc',
-    }
-  });
+    });
 
-
-
-  const format = years.map(({ year }) => {
-    return {
-      year,
-      countries: {
-        ...data.filter(d => d.year === year).map(({ _sum, country }) => ({
-          country,
-          ..._sum
-        }))
+    const format = years.map(({ year }) => {
+      return {
+        year,
+        countries: {
+          ...data.filter(d => d.year === year).map(({ _sum, country }) => ({
+            country,
+            ..._sum
+          }))
+        }
       }
-    }
-  })
+    })
 
-  res.status(200)
-  res.send(format);
-  res.end()
+    res.status(200)
+    res.send(format);
+    res.end()
+  } catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+
 });
 
 app.get(`/country`, async (req, res) => {
-  const data = await prisma.co2.findMany({
-    distinct: 'country',
-    select: {
-      country: true
-    }
-  })
-  res.status(200)
-  res.send(data);
-  res.end()
+  try {
+    const data = await prisma.co2.findMany({
+      distinct: 'country',
+      select: {
+        country: true
+      }
+    })
+    res.status(200)
+    res.send(data);
+    res.end()
+  } catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
 })
 
 const server = app.listen(3000, () =>
