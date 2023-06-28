@@ -41,6 +41,50 @@ app.get(`/co2-total/:paises_count/:ordem`, async (req, res) => {
   }
 });
 
+
+// Dado um pais retorne dados
+app.get(`/country-info/:country`, async (req, res) => {
+  try {
+    const { country } = req.params;
+    const data = await prisma.co2.groupBy({
+      where: {
+        country: {
+          equals: country
+        },
+      },
+      by: ['country'],
+      _avg: {
+        total: true,
+      },
+      _sum: {
+        coal: true,
+        gas: true,
+        flaring: true,
+        cement: true,
+        oil: true,
+      }
+    });
+
+    const format = data.map(({ _sum, _avg, country }) => ({
+      ..._sum,
+      ..._avg,
+      country,
+    }))
+
+    res.status(200)
+    res.send(format);
+    res.end()
+  } catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+
+});
+
+
 // Dado um pais retorne dados
 app.get(`/country/:country/:ano`, async (req, res) => {
   try {
@@ -51,7 +95,7 @@ app.get(`/country/:country/:ano`, async (req, res) => {
           equals: country
         },
         year: {
-          gt: Number(ano)
+          gte: Number(ano)
         }
       },
       by: ['year', 'country'],
@@ -60,10 +104,10 @@ app.get(`/country/:country/:ano`, async (req, res) => {
         gas: true,
         flaring: true,
         cement: true,
+        oil: true,
       },
       orderBy: {
         year: 'desc',
-
       }
 
     });
@@ -118,6 +162,7 @@ app.get(`/year-total/:ano`, async (req, res) => {
         gas: true,
         flaring: true,
         cement: true,
+        oil: true,
       },
       orderBy: {
         year: 'desc',
@@ -127,12 +172,12 @@ app.get(`/year-total/:ano`, async (req, res) => {
     const format = years.map(({ year }) => {
       return {
         year,
-        countries: {
+        countries: [
           ...data.filter(d => d.year === year).map(({ _sum, country }) => ({
             country,
             ..._sum
           }))
-        }
+        ]
       }
     })
 
