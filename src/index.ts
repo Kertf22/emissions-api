@@ -7,18 +7,13 @@ const app = express()
 app.use(express.json())
 
 // Para determinado limite de paises retorne os quem maior emissão
-app.get(`/co2-total/:paises_count`, async (req, res) => {
+// total ou per_capita
+app.get(`/co2-total/:paises_count/:ordem`, async (req, res) => {
 
-  const { paises_count } = req.params;
-  const { ordem } = req.query;
+  const { paises_count, ordem } = req.params;
 
   const data = await prisma.co2.groupBy({
     by: ['country'],
-    where: {
-      NOT: {
-        country: "Global"
-      }
-    },
     _sum: {
       total: true,
       per_capita: true,
@@ -26,7 +21,7 @@ app.get(`/co2-total/:paises_count`, async (req, res) => {
     take: Number(paises_count),
     orderBy: {
       _sum: {
-        total: "desc"
+        [ordem]: "desc"
       }
     }
   });
@@ -79,6 +74,20 @@ app.get(`/country/:country/:ano`, async (req, res) => {
 
 app.get(`/year-total/:ano`, async (req, res) => {
   const { ano } = req.params;
+
+  const years = await prisma.co2.findMany({
+    where: {
+      year: {
+        gt: Number(ano)
+      }
+    },
+    distinct: 'year',
+    select: {
+      year: true
+    }
+  })
+
+
   const data = await prisma.co2.groupBy({
     where: {
       year: {
@@ -88,16 +97,29 @@ app.get(`/year-total/:ano`, async (req, res) => {
     by: ['country', 'year'],
     _sum: {
       total: true,
+      coal: true,
+      gas: true,
+      flaring: true,
+      cement: true,
     },
     orderBy: {
       year: 'desc',
     }
   });
 
-  const format = data.map(({ _sum, country, year }) => ({
-    ..._sum,
-    country, year
-  }))
+
+
+  const format = years.map(({ year }) => {
+    return {
+      year,
+      countries: {
+        ...data.filter(d => d.year === year).map(({ _sum, country }) => ({
+          country,
+          ..._sum
+        }))
+      }
+    }
+  })
 
   res.status(200)
   res.send(format);
