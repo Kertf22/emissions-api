@@ -95,7 +95,7 @@ app.get(`/year-total/:ano`, async (req, res) => {
     const years = await prisma.co2.findMany({
       where: {
         year: {
-          gt: Number(ano)
+          gte: Number(ano)
         }
       },
       distinct: 'year',
