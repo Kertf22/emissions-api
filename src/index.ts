@@ -75,6 +75,46 @@ app.get(`/country/:country/:ano`, async (req, res) => {
   res.end()
 });
 
+// Para um ano retorne todas infos
+
+app.get(`/year-total/:ano`, async (req, res) => {
+  const { ano } = req.params;
+  const data = await prisma.co2.groupBy({
+    where: {
+      year: {
+        gt: Number(ano)
+      }
+    },
+    by: ['country', 'year'],
+    _sum: {
+      total: true,
+    },
+    orderBy: {
+      year: 'desc',
+    }
+  });
+
+  const format = data.map(({ _sum, country, year }) => ({
+    ..._sum,
+    country, year
+  }))
+
+  res.status(200)
+  res.send(format);
+  res.end()
+});
+
+app.get(`/country`, async (req, res) => {
+  const data = await prisma.co2.findMany({
+    distinct: 'country',
+    select: {
+      country: true
+    }
+  })
+  res.status(200)
+  res.send(data);
+  res.end()
+})
 
 const server = app.listen(3000, () =>
   console.log(`
