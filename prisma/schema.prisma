@@ -3,25 +3,21 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = "mysql://aluno:webglauco@web-glauco.chu2ke6ozp1k.us-east-1.rds.amazonaws.com:3306/project_web"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
-}
-
-model Post {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  viewCount Int      @default(0)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+model co2 {
+  id         Int    @id
+  country    String
+  iso_code   String
+  year       Int
+  total      Float
+  coal       Float
+  oil        Float
+  gas        Float
+  cement     Float
+  flaring    Float
+  other      Float
+  per_capita Float
 }
