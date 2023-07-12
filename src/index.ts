@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import express from 'express'
 import cors from "cors"
-import { MostCommonFontsQueryResponse } from './types'
+import { AverageEmissionsQueryResponse, MostCommonFontsQueryResponse } from './types'
 const prisma = new PrismaClient()
 const app = express()
 
@@ -280,6 +280,34 @@ LIMIT ${+amount};
 }
   )
 
+
+app.get('/emissions/average', async (req, res) => {
+  try {
+    const country = req.query.country || 'Brazil';
+    const lastYears = req.query.lastYears || 10;
+
+    const data:AverageEmissionsQueryResponse = await prisma.$queryRaw`
+    SELECT AVG(total) AS media_emissao
+FROM co2
+WHERE country = ${country}
+    AND year >= (SELECT MAX(year) - ${Number(lastYears) - 1} FROM co2)
+    AND year <= (SELECT MAX(year) FROM co2);
+    `
+    const mapped = data.map(d => ({...d, media_emissao: Number(d.media_emissao)}))
+        res.status(200)
+        res.send(mapped);
+        res.end()
+  }
+  catch(err) {
+    console.log(err)
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+}
+  )
 const server = app.listen(3000, () =>
   console.log(`
 🚀 Server ready at: http://localhost:3000

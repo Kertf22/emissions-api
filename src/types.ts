@@ -1,4 +1,10 @@
 export type MostCommonFontsQueryResponse = {
-    font: string;
-    total_registros_fonte: number;
+    font: String;
+    total_registros_fonte: Number;
 }[]
+
+
+export type AverageEmissionsQueryResponse = {
+    media_emissao: Number;
+}[]
+    
