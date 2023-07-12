@@ -97,7 +97,7 @@ app.get(`/country/:country/:ano`, async (req, res) => {
           equals: country
         },
         year: {
-          gte: Number(ano)
+          equals: Number(ano)
         }
       },
       by: ['year', 'country'],
