@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import express from 'express'
 import cors from "cors"
+import { MostCommonFontsQueryResponse } from './types'
 const prisma = new PrismaClient()
 const app = express()
 
@@ -214,6 +215,70 @@ app.get(`/country`, async (req, res) => {
     res.end()
   }
 })
+
+
+app.get('/fonts/most-commons', async (req, res) => {
+  try {
+    const amount = req.query.amount || 6;
+    const data: MostCommonFontsQueryResponse = await prisma.$queryRaw`
+SELECT fonte, COUNT(fonte) AS total_registros_fonte
+FROM (
+    SELECT 'coal' AS fonte
+    FROM co2
+    WHERE coal > 0
+
+    UNION ALL
+    
+    SELECT 'oil' AS fonte
+    FROM co2
+    WHERE oil > 0
+
+    UNION ALL
+    
+    SELECT 'gas' AS fonte
+    FROM co2
+    WHERE gas > 0
+    
+    
+    UNION ALL
+    
+    SELECT 'cement' AS fonte
+    FROM co2
+    WHERE cement > 0
+    
+    
+    UNION ALL
+    
+    SELECT  'flaring' AS fonte
+    FROM co2
+    WHERE flaring > 0
+    
+    UNION ALL
+    
+    SELECT 'other' AS fonte
+    FROM co2
+    WHERE other > 0
+    
+) AS subquery
+GROUP BY fonte
+ORDER BY total_registros_fonte DESC
+LIMIT ${+amount};
+    `
+    const mapped = data.map(d => ({...d, total_registros_fonte: Number(d.total_registros_fonte)}))
+        res.status(200)
+        res.send(mapped);
+        res.end()
+  }
+  catch(err) {
+    console.log(err)
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+}
+  )
 
 const server = app.listen(3000, () =>
   console.log(`
