@@ -21,3 +21,9 @@ model co2 {
   other      Float
   per_capita Float
 }
+
+model user {
+  id       Int    @id
+  username String
+  password String
+}

@@ -1,12 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 import express from 'express'
+import jwt from "jsonwebtoken"
 import cors from "cors"
 import { AverageEmissionsQueryResponse, MostCommonFontsQueryResponse } from './types'
+import authMiddleware from "./middlewares/auth"
 const prisma = new PrismaClient()
 const app = express()
 
 app.use(express.json())
 app.use(cors())
+app.use(authMiddleware())
 
 // Para determinado limite de paises retorne os quem maior emissão
 
@@ -264,12 +267,12 @@ GROUP BY fonte
 ORDER BY total_registros_fonte DESC
 LIMIT ${+amount};
     `
-    const mapped = data.map(d => ({...d, total_registros_fonte: Number(d.total_registros_fonte)}))
-        res.status(200)
-        res.send(mapped);
-        res.end()
+    const mapped = data.map(d => ({ ...d, total_registros_fonte: Number(d.total_registros_fonte) }))
+    res.status(200)
+    res.send(mapped);
+    res.end()
   }
-  catch(err) {
+  catch (err) {
     console.log(err)
     res.status(500)
     res.send({
@@ -278,7 +281,7 @@ LIMIT ${+amount};
     res.end()
   }
 }
-  )
+)
 
 
 app.get('/emissions/average', async (req, res) => {
@@ -286,19 +289,19 @@ app.get('/emissions/average', async (req, res) => {
     const country = req.query.country || 'Brazil';
     const lastYears = req.query.lastYears || 10;
 
-    const data:AverageEmissionsQueryResponse = await prisma.$queryRaw`
+    const data: AverageEmissionsQueryResponse = await prisma.$queryRaw`
     SELECT AVG(total) AS media_emissao
 FROM co2
 WHERE country = ${country}
     AND year >= (SELECT MAX(year) - ${Number(lastYears) - 1} FROM co2)
     AND year <= (SELECT MAX(year) FROM co2);
     `
-    const mapped = data.map(d => ({...d, media_emissao: Number(d.media_emissao)}))
-        res.status(200)
-        res.send(mapped);
-        res.end()
+    const mapped = data.map(d => ({ ...d, media_emissao: Number(d.media_emissao) }))
+    res.status(200)
+    res.send(mapped);
+    res.end()
   }
-  catch(err) {
+  catch (err) {
     console.log(err)
     res.status(500)
     res.send({
@@ -307,7 +310,80 @@ WHERE country = ${country}
     res.end()
   }
 }
-  )
+)
+
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(500)
+      res.send({
+        message: "Aconteceu um erro"
+      });
+      res.end()
+      return;
+    }
+    let user = await prisma.create({
+      data: {
+        username,
+        password
+      }
+    })
+    res.send({
+      user
+    })
+  }
+  catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+})
+
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(500)
+      res.send({
+        message: "Aconteceu um erro"
+      });
+      res.end()
+    }
+    const userExists = await prisma.user.findFirst({
+      where: {
+        username,
+        password
+      }
+    })
+    if(!userExists) {
+      res.status(403)
+      res.send({
+        message:"Usuário e/ou senha incorretos"
+      })
+    }
+
+    const token = jwt.sign({
+  data: userExists.id
+}, 'nelsonsegredo', { expiresIn: '1h' });
+
+    res.status(200)
+    res.send({
+      token
+    })
+    res.end()
+    
+  }
+  catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+})
 const server = app.listen(3000, () =>
   console.log(`
 🚀 Server ready at: http://localhost:3000
