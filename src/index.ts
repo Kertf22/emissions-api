@@ -73,7 +73,8 @@ app.post("/login", async (req, res) => {
 
     res.status(200)
     res.send({
-      token
+      token,
+      user: userExists
     })
     res.end()
     
