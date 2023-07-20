@@ -14,6 +14,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
   jwt.verify(token, SECRET, (err: any, data: any) => {
     if (err) {
+      console.log(err)
       res.status(403).end();
       return;
     }

@@ -23,7 +23,7 @@ model co2 {
 }
 
 model user {
-  id       Int    @id
+  id       Int      @id @default(autoincrement())
   username String
   password String
 }

@@ -9,7 +9,86 @@ const app = express()
 
 app.use(express.json())
 app.use(cors())
-app.use(authMiddleware())
+
+
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(500)
+      res.send({
+        message: "Aconteceu um erro"
+      });
+      res.end()
+      return;
+    }
+    let user = await prisma.user.create({
+      data: {
+        username,
+        password
+      }
+    })
+    res.send({
+      user
+    })
+  }
+  catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+})
+
+
+
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      res.status(500)
+      res.send({
+        message: "Aconteceu um erro"
+      });
+      res.end()
+    }
+    const userExists = await prisma.user.findFirst({
+      where: {
+        username,
+        password
+      }
+    })
+    if(!userExists) {
+      res.status(401)
+      res.send({
+        message:"Usuário e/ou senha incorretos"
+      })
+      return;
+    }
+
+    const token = jwt.sign({
+  data: userExists.id
+}, 'nelsonsegredo', { expiresIn: '1h' });
+
+    res.status(200)
+    res.send({
+      token
+    })
+    res.end()
+    
+  }
+  catch (err) {
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    });
+    res.end()
+  }
+})
+
+
+app.use(authMiddleware)
 
 // Para determinado limite de paises retorne os quem maior emissão
 
@@ -312,78 +391,9 @@ WHERE country = ${country}
 }
 )
 
-app.post("/register", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      res.status(500)
-      res.send({
-        message: "Aconteceu um erro"
-      });
-      res.end()
-      return;
-    }
-    let user = await prisma.create({
-      data: {
-        username,
-        password
-      }
-    })
-    res.send({
-      user
-    })
-  }
-  catch (err) {
-    res.status(500)
-    res.send({
-      message: "Aconteceu um erro"
-    });
-    res.end()
-  }
-})
 
-app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      res.status(500)
-      res.send({
-        message: "Aconteceu um erro"
-      });
-      res.end()
-    }
-    const userExists = await prisma.user.findFirst({
-      where: {
-        username,
-        password
-      }
-    })
-    if(!userExists) {
-      res.status(403)
-      res.send({
-        message:"Usuário e/ou senha incorretos"
-      })
-    }
 
-    const token = jwt.sign({
-  data: userExists.id
-}, 'nelsonsegredo', { expiresIn: '1h' });
 
-    res.status(200)
-    res.send({
-      token
-    })
-    res.end()
-    
-  }
-  catch (err) {
-    res.status(500)
-    res.send({
-      message: "Aconteceu um erro"
-    });
-    res.end()
-  }
-})
 const server = app.listen(3000, () =>
   console.log(`
 🚀 Server ready at: http://localhost:3000
