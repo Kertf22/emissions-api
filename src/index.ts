@@ -395,13 +395,16 @@ WHERE country = ${country}
 
 app.post('/location', async (req, res) => {
   try {
-    const { lat, long, timestamp} = req.body;
+    const { lat, long, timestamp, city, country, state} = req.body;
 
     const location = await prisma.history_location.create({
       data: {
         lat,
         long,
-        timestamp
+        timestamp,
+        city,
+        country,
+        state
       }
     })
 

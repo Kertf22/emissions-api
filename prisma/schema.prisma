@@ -34,4 +34,7 @@ model history_location {
   lat   Float
   long  Float
   timestamp Float
+  country String
+  city String
+  state String
 }
