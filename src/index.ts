@@ -89,11 +89,10 @@ app.post("/login", async (req, res) => {
 })
 
 
-app.use(authMiddleware)
 
 // Para determinado limite de paises retorne os quem maior emissão
 
-app.get(`/co2-total/:paises_count/:ordem`, async (req, res) => {
+app.get(`/co2-total/:paises_count/:ordem`, authMiddleware, async (req, res) => {
 
   const { paises_count, ordem } = req.params;
   try {
@@ -128,7 +127,7 @@ app.get(`/co2-total/:paises_count/:ordem`, async (req, res) => {
 
 
 // Dado um pais retorne dados
-app.get(`/country-info/:country`, async (req, res) => {
+app.get(`/country-info/:country`, authMiddleware, async (req, res) => {
   try {
     const { country } = req.params;
     const data = await prisma.co2.groupBy({
@@ -171,7 +170,7 @@ app.get(`/country-info/:country`, async (req, res) => {
 
 
 // Dado um pais retorne dados
-app.get(`/country/:country/:ano`, async (req, res) => {
+app.get(`/country/:country/:ano`, authMiddleware, async (req, res) => {
   try {
     const { country, ano } = req.params;
     const data = await prisma.co2.groupBy({
@@ -217,7 +216,7 @@ app.get(`/country/:country/:ano`, async (req, res) => {
 
 // Para um ano retorne todas infos
 
-app.get(`/year-total/:ano`, async (req, res) => {
+app.get(`/year-total/:ano`, authMiddleware, async (req, res) => {
   const { ano } = req.params;
 
   try {
@@ -279,7 +278,7 @@ app.get(`/year-total/:ano`, async (req, res) => {
 
 });
 
-app.get(`/country`, async (req, res) => {
+app.get(`/country`, authMiddleware, async (req, res) => {
   try {
     const data = await prisma.co2.findMany({
       distinct: 'country',
@@ -300,7 +299,7 @@ app.get(`/country`, async (req, res) => {
 })
 
 
-app.get('/fonts/most-commons', async (req, res) => {
+app.get('/fonts/most-commons', authMiddleware, async (req, res) => {
   try {
     const amount = req.query.amount || 6;
     const data: MostCommonFontsQueryResponse = await prisma.$queryRaw`
@@ -364,7 +363,7 @@ LIMIT ${+amount};
 )
 
 
-app.get('/emissions/average', async (req, res) => {
+app.get('/emissions/average', authMiddleware, async (req, res) => {
   try {
     const country = req.query.country || 'Brazil';
     const lastYears = req.query.lastYears || 10;
