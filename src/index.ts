@@ -393,7 +393,44 @@ WHERE country = ${country}
 )
 
 
+app.post('/location', async (req, res) => {
+  try {
+    const { lat, long, timestamp} = req.body;
 
+    const location = await prisma.history_location.create({
+      data: {
+        lat,
+        long,
+        timestamp
+      }
+    })
+
+    res.status(201)
+    res.send(location);
+    res.end()
+    return;
+  }
+  catch (err) {
+    console.log(err)
+    res.status(500)
+    res.send({
+      message: "Aconteceu um erro"
+    })
+    res.end()
+  }
+})
+
+app.get('/location', async (req, res) => {
+  const history = await prisma.history_location.findMany({
+    orderBy: {
+      timestamp: 'desc'
+    }
+  });
+  res.status(200)
+  res.send(history)
+  res.end()
+  return;
+})
 
 const server = app.listen(3000, () =>
   console.log(`

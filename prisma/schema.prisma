@@ -27,3 +27,11 @@ model user {
   username String
   password String
 }
+
+
+model history_location {
+  id    Int @id @default(autoincrement())
+  lat   Float
+  long  Float
+  timestamp Float
+}
