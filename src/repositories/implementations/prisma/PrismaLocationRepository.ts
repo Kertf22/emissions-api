@@ -3,24 +3,17 @@ import LocationRepository from "../../contracts/LocationRepository";
 import Location from "../../../models/location";
 
 export default class PrismaLocationRepository implements LocationRepository {
-  async getHistory(): Promise<Location[]> {
-    const locations = await prisma.history_location.findMany({
-      orderBy: {
-        timestamp: "desc",
+  async getHistory(): Promise<any[]> {
+    const locations = await prisma.history_location.groupBy({
+      by: ["city", "country", "state"],
+      _count: {
+        city: true,
+        country: true,
+        state: true,
       },
     });
-    return locations.map(
-      (location) =>
-        new Location(
-          location.id,
-          location.lat,
-          location.long,
-          location.timestamp,
-          location.country,
-          location.city,
-          location.state
-        )
-    );
+    console.log(locations);
+    return locations;
   }
   async save(location: Location): Promise<void> {
     await prisma.history_location.create({

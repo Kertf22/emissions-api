@@ -22,6 +22,7 @@ export default class UserService {
     }
 
     async login(username: string, password: string): Promise<any> {
+        console.log(await this.getUser('teste'));
         const user = await this.userRepository.findByUsernameAndPassword(username, password);
         if (!user) {
             throw new Error("Invalid username or password");
