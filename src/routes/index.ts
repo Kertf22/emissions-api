@@ -30,7 +30,7 @@ appRoutes.post('/register', userController.register);
 appRoutes.post('/login', userController.login);
 
 appRoutes.post('/location', authMiddleware, locationController.saveLocation);
-appRoutes.get('/location', authMiddleware, locationController.getHistory);
+appRoutes.get('/location', locationController.getHistory);
 
 appRoutes.get('/country-info/:country', authMiddleware,  co2Controller.getCountryInfo);
 appRoutes.get('/country/:country/:ano', authMiddleware, co2Controller.getCountryByYear);
