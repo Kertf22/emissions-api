@@ -28,7 +28,6 @@ export default class CO2Controller {
     async getCountries(req: Request, res: Response): Promise<void> {
         try {
             const data = await this.co2Service.getCountries();
-            console.log(data)
             res.status(200).json(data);
         }
         catch (err) {
@@ -83,7 +82,6 @@ export default class CO2Controller {
         const { amount } = req.query;
         try {
             const data = await this.co2Service.getMostCommonFonts(Number(amount));
-            console.log(data)
             res.status(200).json(data);
         }
         catch (err) {

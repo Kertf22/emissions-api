@@ -34,12 +34,14 @@ export default class PrismaCO2Repository implements CO2Repository {
     return format;
   }
   async getCountries(): Promise<any> {
-    return await prisma.co2.findMany({
+    const countries = await prisma.co2.findMany({
       distinct: "country",
       select: {
         country: true,
       },
     });
+    console.log(countries)
+    return countries
   }
   async getCountryByYear(country: string, year: number): Promise<any> {
     const data = await prisma.co2.groupBy({

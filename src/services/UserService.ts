@@ -4,8 +4,8 @@ import JWTService from "./JWTService";
 
 export default class UserService {
     constructor
-    (private userRepository: UserRepository,
-    private jwtService: JWTService) {}
+        (private userRepository: UserRepository,
+            private jwtService: JWTService) { }
 
     async getUser(username: string): Promise<any> {
         const user = await this.userRepository.findByUsername(username);
@@ -22,13 +22,11 @@ export default class UserService {
     }
 
     async login(username: string, password: string): Promise<any> {
-        console.log(await this.getUser('teste'));
         const user = await this.userRepository.findByUsernameAndPassword(username, password);
         if (!user) {
             throw new Error("Invalid username or password");
         }
-        const token = await this.jwtService.sign({ id: user.id }, "nelsonsegredo", { expiresIn: "1h"});
-        console.log(token)
+        const token = await this.jwtService.sign({ id: user.id, username: user.username, }, "nelsonsegredo", { expiresIn: "1h" });
         return {
             token,
             user
